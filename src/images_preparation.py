@@ -4,6 +4,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
+from config import CustomEnvironment
+
 NumList = List[int]
 StringList = List[str]
 
@@ -24,13 +26,13 @@ def create_directory(class_name: str, train_dir: str, valid_dir: str, test_dir: 
     return class_directories_dict
 
 
-def create_train_valid_test_directories(DATA_DIR: str) -> List[Dict[str, str]]:
-    if not os.path.exists(DATA_DIR):
-        os.mkdir(DATA_DIR)
+def create_train_valid_test_directories(data_dir: str) -> List[Dict[str, str]]:
+    if not os.path.exists(data_dir):
+        os.mkdir(data_dir)
 
-    train_dir = os.path.join(DATA_DIR, 'train')
-    valid_dir = os.path.join(DATA_DIR, 'valid')
-    test_dir = os.path.join(DATA_DIR, 'test')
+    train_dir = os.path.join(data_dir, 'train')
+    valid_dir = os.path.join(data_dir, 'valid')
+    test_dir = os.path.join(data_dir, 'test')
 
     for directory in (train_dir, valid_dir, test_dir):
         if not os.path.exists(directory):
@@ -59,14 +61,15 @@ def validation_of_correct_names(classes: List[str], base_dir: str) -> List[Strin
     return list_of_cls_names
 
 
-def create_lists_of_train_and_valid_count_of_classes(list_of_cls_names: List[StringList]) -> Tuple[NumList, NumList]:
+def create_lists_of_train_and_valid_count_of_classes(
+        list_of_cls_names: List[StringList], train_ratio: float, valid_ratio: float) -> Tuple[NumList, NumList]:
     list_of_train_classes = []
     list_of_valid_classes = []
     for cls_names in list_of_cls_names:
-        train_idx_cls = int(TRAIN_RATIO * len(cls_names))
+        train_idx_cls = int(train_ratio * len(cls_names))
         list_of_train_classes.append(train_idx_cls)
 
-        valid_idx_cls = train_idx_cls + int(VALID_RATIO * len(cls_names))
+        valid_idx_cls = train_idx_cls + int(valid_ratio * len(cls_names))
         list_of_valid_classes.append(valid_idx_cls)
     return list_of_train_classes, list_of_valid_classes
 
@@ -80,7 +83,6 @@ def copy_files_to_directories(dataset_name: str, class_name: str, file_name: str
 def copy_classes_to_directories(
         list_of_cls_names: List[StringList], list_of_train_classes: List[int], list_of_valid_classes: List[int],
         list_of_classes_dir_dicts: List[Dict[str, str]], classes: List[str]) -> None:
-
     print(f'[INFO] Copy files to directories...')
     for cls_names, train_idx_cls, valid_idx_cls, class_dir_dict, class_name in zip(
             list_of_cls_names, list_of_train_classes, list_of_valid_classes,
@@ -99,24 +101,19 @@ def copy_classes_to_directories(
             print(f'[INFO] Count of images for class "{class_name}" in {dataset} dataset: {count_of_images}')
 
 
-def prepate_images(classes: List[str], DATA_DIR:str , base_dir: str) -> None:
+def prepate_images(classes: List[str], DATA_DIR: str, base_dir: str, train_ratio: float, valid_ratio: float) -> None:
     list_of_classes_dir_dicts = create_train_valid_test_directories(DATA_DIR)
     list_of_cls_names = validation_of_correct_names(classes, base_dir)
-    list_of_train_classes, list_of_valid_classes = create_lists_of_train_and_valid_count_of_classes(list_of_cls_names)
-    copy_classes_to_directories(list_of_cls_names, list_of_train_classes, list_of_valid_classes, list_of_classes_dir_dicts, classes)
+    list_of_train_classes, list_of_valid_classes = create_lists_of_train_and_valid_count_of_classes(list_of_cls_names, train_ratio, valid_ratio)
+    copy_classes_to_directories(list_of_cls_names, list_of_train_classes, list_of_valid_classes,
+                                list_of_classes_dir_dicts, classes)
 
 
 if __name__ == '__main__':
-    original_images_directory = 'scrape_google/images'
-    execution_path = os.getcwd()
-    base_dir = os.path.join(execution_path, original_images_directory)
+    base_dir = CustomEnvironment.get_base_dir()
+    train_ratio = CustomEnvironment.get_train_ratio()
+    valid_ratio = CustomEnvironment.get_valid_ratio()
+    data_dir = CustomEnvironment.get_data_dir()
+    classes = CustomEnvironment.get_images_classes()
 
-    CLS_1 = 'horse'
-    CLS_2 = 'lion'
-    TRAIN_RATIO = 0.7
-    VALID_RATIO = 0.2
-    DATA_DIR = r'images-dataset'
-
-    classes = [CLS_1, CLS_2]
-
-    prepate_images(classes, DATA_DIR, base_dir)
+    prepate_images(classes, data_dir, base_dir, train_ratio, valid_ratio)

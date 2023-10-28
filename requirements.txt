@@ -3,3 +3,4 @@ python-magic==0.4.15
 progressbar
 typing
 numpy
+django-environ
