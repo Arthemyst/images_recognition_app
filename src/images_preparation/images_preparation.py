@@ -4,8 +4,6 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from config import CustomEnvironment
-
 NumList = List[int]
 StringList = List[str]
 
@@ -26,7 +24,7 @@ def create_directory(class_name: str, train_dir: str, valid_dir: str, test_dir: 
     return class_directories_dict
 
 
-def create_train_valid_test_directories(data_dir: str) -> List[Dict[str, str]]:
+def create_train_valid_test_directories(data_dir: str, classes: List[str]) -> List[Dict[str, str]]:
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
 
@@ -74,7 +72,7 @@ def create_lists_of_train_and_valid_count_of_classes(
     return list_of_train_classes, list_of_valid_classes
 
 
-def copy_files_to_directories(dataset_name: str, class_name: str, file_name: str, class_dir_dict: Dict) -> None:
+def copy_files_to_directories(dataset_name: str, class_name: str, file_name: str, class_dir_dict: Dict, base_dir: str) -> None:
     src = os.path.join(base_dir, class_name, file_name)
     dst = os.path.join(class_dir_dict[dataset_name], file_name)
     shutil.copyfile(src, dst)
@@ -82,18 +80,18 @@ def copy_files_to_directories(dataset_name: str, class_name: str, file_name: str
 
 def copy_classes_to_directories(
         list_of_cls_names: List[StringList], list_of_train_classes: List[int], list_of_valid_classes: List[int],
-        list_of_classes_dir_dicts: List[Dict[str, str]], classes: List[str]) -> None:
+        list_of_classes_dir_dicts: List[Dict[str, str]], classes: List[str], base_dir: str) -> None:
     print(f'[INFO] Copy files to directories...')
     for cls_names, train_idx_cls, valid_idx_cls, class_dir_dict, class_name in zip(
             list_of_cls_names, list_of_train_classes, list_of_valid_classes,
             list_of_classes_dir_dicts, classes):
         for i, file_name in enumerate(cls_names):
             if i <= train_idx_cls:
-                copy_files_to_directories("train", class_name, file_name, class_dir_dict)
+                copy_files_to_directories("train", class_name, file_name, class_dir_dict, base_dir)
             if train_idx_cls < i <= valid_idx_cls:
-                copy_files_to_directories("valid", class_name, file_name, class_dir_dict)
+                copy_files_to_directories("valid", class_name, file_name, class_dir_dict, base_dir)
             if valid_idx_cls < i <= len(cls_names):
-                copy_files_to_directories("test", class_name, file_name, class_dir_dict)
+                copy_files_to_directories("test", class_name, file_name, class_dir_dict, base_dir)
 
     for class_name, class_dir_dict in zip(classes, list_of_classes_dir_dicts):
         for dataset in ["train", "valid", "test"]:
@@ -101,19 +99,11 @@ def copy_classes_to_directories(
             print(f'[INFO] Count of images for class "{class_name}" in {dataset} dataset: {count_of_images}')
 
 
-def prepate_images(classes: List[str], DATA_DIR: str, base_dir: str, train_ratio: float, valid_ratio: float) -> None:
-    list_of_classes_dir_dicts = create_train_valid_test_directories(DATA_DIR)
+def prepare_images(classes: List[str], DATA_DIR: str, base_dir: str, train_ratio: float, valid_ratio: float) -> None:
+    list_of_classes_dir_dicts = create_train_valid_test_directories(DATA_DIR, classes)
     list_of_cls_names = validation_of_correct_names(classes, base_dir)
-    list_of_train_classes, list_of_valid_classes = create_lists_of_train_and_valid_count_of_classes(list_of_cls_names, train_ratio, valid_ratio)
+    list_of_train_classes, list_of_valid_classes = create_lists_of_train_and_valid_count_of_classes(list_of_cls_names,
+                                                                                                    train_ratio,
+                                                                                                    valid_ratio)
     copy_classes_to_directories(list_of_cls_names, list_of_train_classes, list_of_valid_classes,
-                                list_of_classes_dir_dicts, classes)
-
-
-if __name__ == '__main__':
-    base_dir = CustomEnvironment.get_base_dir()
-    train_ratio = CustomEnvironment.get_train_ratio()
-    valid_ratio = CustomEnvironment.get_valid_ratio()
-    data_dir = CustomEnvironment.get_data_dir()
-    classes = CustomEnvironment.get_images_classes()
-
-    prepate_images(classes, data_dir, base_dir, train_ratio, valid_ratio)
+                                list_of_classes_dir_dicts, classes, base_dir)

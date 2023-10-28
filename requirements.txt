@@ -4,3 +4,4 @@ progressbar
 typing
 numpy
 django-environ
+tensorflow
