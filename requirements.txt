@@ -7,3 +7,5 @@ django-environ
 tensorflow
 plotly
 pandas
+pillow
+scipy
