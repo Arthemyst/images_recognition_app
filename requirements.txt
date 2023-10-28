@@ -5,3 +5,5 @@ typing
 numpy
 django-environ
 tensorflow
+plotly
+pandas
