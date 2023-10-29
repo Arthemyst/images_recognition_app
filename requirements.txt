@@ -10,3 +10,5 @@ pandas
 pillow
 scipy
 scikit-learn
+imutils
+opencv-python

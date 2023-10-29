@@ -1,39 +1,25 @@
-import argparse
-import os
-import pickle
-import warnings
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.model_selection import train_test_split
 from datetime import datetime
-
-import pandas as pd
 import plotly.graph_objects as go
 import plotly.offline as po
 from plotly.subplots import make_subplots
+from imutils import paths
+import numpy as np
+import pandas as pd
+import argparse
+import pickle
+import cv2
+import os
+import warnings
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
 from model_preparation.architecture import models
-
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
-# example of execution:
-# $ python train_binary.py -e 20
-# 20 - number of epochs
-
-ap = argparse.ArgumentParser()
-ap.add_argument("-e", "--epochs", default=1, help="Choose number of epochs", type=int)
-args = vars(ap.parse_args())
-
-MODEL_NAME = "LeNet5"
-LEARNING_RATE = 0.001
-EPOCHS = args["epochs"]
-BATCH_SIZE = 32
-INPUT_SHAPE = (150, 150, 3)
-TRAIN_DIR = "images-dataset/train"
-VALID_DIR = "images-dataset/valid"
 
 
 def plot_hist(history, filename, model_name):
@@ -96,48 +82,79 @@ def plot_hist(history, filename, model_name):
     po.plot(fig, filename=filename, auto_open=False)
 
 
-# images augmentation
+# Example of execution:
+# $ python train_multilabel.py -d images -e 1
+
+np.random.seed(10)
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-d', '--images', required=True, help='Path to the data')
+ap.add_argument('-e', '--epochs', default=1, type=int, help='Choose number of epochs')
+args = vars(ap.parse_args())
+
+MODEL_NAME = "VGGNetSmall"
+EPOCHS = args['epochs']
+LEARNING_RATE = 0.001
+BATCH_SIZE = 32
+INPUT_SHAPE = (150, 150, 3)
+
+print('[INFO] Data loading...')
+image_paths = list(paths.list_images(args['images']))
+np.random.shuffle(image_paths)
+
+data = []
+labels = []
+for image_path in image_paths:
+    image = cv2.imread(image_path)
+    image = cv2.resize(image, (INPUT_SHAPE[1], INPUT_SHAPE[0]))
+    image = img_to_array(image)
+    data.append(image)
+
+    label = image_path.split('\\')[-2].split('_')
+    labels.append(label)
+
+data = np.array(data, dtype='float') / 255.
+labels = np.array(labels)
+
+print(f'[INFO] {len(image_paths)} images with size: {data.nbytes / (1024 * 1000.0):.2f} MB')
+print(f'[INFO] Shape of data: {data.shape}')
+
+print(f'[INFO] Binarization of labels... ')
+mlb = MultiLabelBinarizer()
+labels = mlb.fit_transform(labels)
+print(f'[INFO] Labels: {mlb.classes_}')
+
+print(f'[INFO] Export labels to file...')
+with open(r'output/mlb,pickle', 'wb') as file:
+    file.write(pickle.dumps(mlb))
+
+print('[INFO] Split to train and test datasets...')
+X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=10)
+print(f'[INFO] Shape of train dataset: {X_train.shape}')
+print(f'[INFO] Shape of test dataset: {X_test.shape}')
+
+print('[INFO] Generator building...')
 train_datagen = ImageDataGenerator(
     rotation_range=30,
-    rescale=1.0 / 255.0,
     width_shift_range=0.2,
     height_shift_range=0.2,
     shear_range=0.2,
     zoom_range=0.2,
     horizontal_flip=True,
-    fill_mode="nearest",
+    fill_mode='nearest'
 )
 
-valid_datagen = ImageDataGenerator(rescale=1.0 / 255.0)
-
-train_generator = train_datagen.flow_from_directory(
-    directory=TRAIN_DIR,
-    target_size=INPUT_SHAPE[:2],
-    batch_size=BATCH_SIZE,
-    class_mode="binary",
-)
-
-valid_generator = valid_datagen.flow_from_directory(
-    directory=VALID_DIR,
-    target_size=INPUT_SHAPE[:2],
-    batch_size=BATCH_SIZE,
-    class_mode="binary",
-)
-
-architectures = {MODEL_NAME: models.LeNet5}
-architecture = architectures[MODEL_NAME](input_shape=INPUT_SHAPE)
+print('[INFO] Model building...')
+architecture = models.VGGNetSmall(input_shape=INPUT_SHAPE, num_classes=len(mlb.classes_), final_activation='sigmoid')
 model = architecture.build()
-
-model.compile(
-    optimizer=Adam(learning_rate=LEARNING_RATE),
-    loss="binary_crossentropy",
-    metrics=["accuracy"],
-)
 model.summary()
 
-dt = datetime.now().strftime("%d_%m_%Y_%H_%M")
-filepath = os.path.join("output", "binary_model_" + dt + ".hdf5")
+model.compile(optimizer=Adam(lr=LEARNING_RATE),
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
 
+dt = datetime.now().strftime('%d_%m_%Y_%H_%M')
+filepath = os.path.join('output', 'multilabel_model_' + dt + '.hd5f')
 checkpoint = ModelCheckpoint(
     filepath=filepath, monitor="val_accuracy", save_best_only=True
 )
@@ -153,21 +170,17 @@ early_stop = EarlyStopping(
 
 print("[INFO] Model training...")
 history = model.fit_generator(
-    generator=train_generator,
-    steps_per_epoch=train_generator.samples // BATCH_SIZE,
-    validation_data=valid_generator,
-    validation_steps=valid_generator.samples // BATCH_SIZE,
+    generator=train_datagen.flow(X_train, y_train, batch_size=BATCH_SIZE),
+    steps_per_epoch=len(X_train) // BATCH_SIZE,
+    validation_data=(X_test, y_test),
     epochs=EPOCHS,
     callbacks=[checkpoint, early_stop],
 )
 
-print("[INFO] Exporting plot to html file...")
-filename = os.path.join("output", "report_" + dt + ".html")
-model_name = architectures[MODEL_NAME].split('.')[1]
-plot_hist(history, filename, model_name)
-
-print("[INFO] Exporting label to file...")
-with open(r"output/labels.pickle", "wb") as file:
-    file.write(pickle.dumps(train_generator.class_indices))
+filename = os.path.join('output', 'multilabel_report_' + dt + '.html')
+print(f"[INFO] Exporting plot to file {filename}...")
+plot_hist(history, filename, MODEL_NAME)
 
 print("[INFO] END")
+
+
