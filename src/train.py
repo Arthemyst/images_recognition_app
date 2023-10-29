@@ -7,18 +7,19 @@ import argparse
 import pickle
 import os
 
-# import warnings
-# warnings.filterwarnings("ignore", category=FutureWarning)
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from model_preparation.architecture import models
 
-print(f"Tensorflow version: {tf.__version__}")
+# example of execution:
+# $ python train.py -e 20
+# 20 - number of epochs
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-e', '--epochs', default=1, help='Choose count of epochs', type=int)
