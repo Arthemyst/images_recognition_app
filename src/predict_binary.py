@@ -15,7 +15,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import load_model
 
 # example of execution:
-# $ python predict.py -d images-dataset/test -m output/model_28_10_2023_22_00.hdf5
+# $ python predict_binary.py -d images-dataset/test -m output/model_28_10_2023_22_00.hdf5
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-d', '--dataset', required=True, help='type of images: [train, valid, test')
