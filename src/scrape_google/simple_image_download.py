@@ -128,7 +128,7 @@ class Downloader:
             SCANNER_COUNTER = -1
             url = urls_[i]
             path = self.generate_dir(search[i])
-            raw_html = self._download_page(url) # Download the entire page from the google Picture search
+            raw_html = self._download_page(url)
             for _ in range(limit+1):
                 webpage_url = scan_webpage(raw_html, self._extensions, timer)
                 if webpage_url:

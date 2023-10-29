@@ -7,6 +7,7 @@ import os
 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 

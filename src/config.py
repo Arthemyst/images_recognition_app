@@ -8,8 +8,8 @@ class CustomEnvironment:
     env = environ.Env(
         TRAIN_RATIO=(float, 0.7),
         VALID_RATIO=(float, 0.2),
-        DATA_DIR=(str, r"images-dataset"),
-        ORIGINAL_IMAGES_DIRECTORY=(str, r"scrape_google/images"),
+        DATA_DIR=(str, r"images-dataset/"),
+        ORIGINAL_IMAGES_DIRECTORY=(str, r"images/"),
     )
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -6,19 +6,19 @@ import pandas as pd
 import argparse
 import pickle
 import os
-
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning)
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from model_preparation.architecture import models
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # example of execution:
-# $ python train.py -e 20
+# $ python train_binary.py -e 20
 # 20 - number of epochs
 
 ap = argparse.ArgumentParser()
