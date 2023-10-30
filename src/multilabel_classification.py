@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 # Example of execution:
-# python multilabel_classification.py -d images_multilabes/black_dress/0000.jpg -m out/multilabel_model_29_10_2023_20_48.hd5f
+# python multilabel_classification.py -d images_multilabes/black_dress/0000.jpg -m output/multilabel_model_29_10_2023_20_48/saved_model.pb
 
 
 def load(filename):

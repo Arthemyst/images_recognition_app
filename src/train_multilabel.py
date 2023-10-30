@@ -125,7 +125,7 @@ labels = mlb.fit_transform(labels)
 print(f'[INFO] Labels: {mlb.classes_}')
 
 print(f'[INFO] Export labels to file...')
-with open(r'output/mlb,pickle', 'wb') as file:
+with open(r'output/mlb.pickle', 'wb') as file:
     file.write(pickle.dumps(mlb))
 
 print('[INFO] Split to train and test datasets...')
@@ -144,17 +144,18 @@ train_datagen = ImageDataGenerator(
     fill_mode='nearest'
 )
 
+
 print('[INFO] Model building...')
 architecture = models.VGGNetSmall(input_shape=INPUT_SHAPE, num_classes=len(mlb.classes_), final_activation='sigmoid')
 model = architecture.build()
-model.summary()
+SUMMARY = model.summary()
 
-model.compile(optimizer=Adam(lr=LEARNING_RATE),
+model.compile(optimizer=Adam(learning_rate=LEARNING_RATE),
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
 dt = datetime.now().strftime('%d_%m_%Y_%H_%M')
-filepath = os.path.join('output', 'multilabel_model_' + dt + '.hd5f')
+filepath = os.path.join('output', 'multilabel_model_' + dt)
 checkpoint = ModelCheckpoint(
     filepath=filepath, monitor="val_accuracy", save_best_only=True
 )
@@ -173,6 +174,7 @@ history = model.fit_generator(
     generator=train_datagen.flow(X_train, y_train, batch_size=BATCH_SIZE),
     steps_per_epoch=len(X_train) // BATCH_SIZE,
     validation_data=(X_test, y_test),
+    validation_steps=len(X_test) // BATCH_SIZE,
     epochs=EPOCHS,
     callbacks=[checkpoint, early_stop],
 )
