@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Model
-from tensorflow.keras.layers import BatchNormalization, Conv2D, Input, ZeroPadding2D, LeakyReLU, UpSamplking2D
+from tensorflow.keras.layers import BatchNormalization, Conv2D, Input, ZeroPadding2D, LeakyReLU, UpSampling2D
 
 
 def parse_cfg(cfg_file: str):
@@ -58,7 +58,7 @@ def yolo_v3_net(cfg_file, model_size, num_classes):
 
         elif block["type"] == "upsample":
             stride = int(block["stride"])
-            inputs = UpSamplking2D(stride)(inputs)
+            inputs = UpSampling2D(stride)(inputs)
 
         # If it is a route layer
         elif block["type"] == "route":
@@ -91,7 +91,7 @@ def yolo_v3_net(cfg_file, model_size, num_classes):
             inputs = tf.reshape(inputs, [-1, n_anchors * out_shape[1] * out_shape[2], 5 + num_classes])
 
             box_centers = inputs[:, :, 0:2]
-            box_shapes = input[:, :, 2:4]
+            box_shapes = inputs[:, :, 2:4]
             confidence = inputs[:, :, 4:5]
             classes = inputs[:, :, 5:num_classes + 5]
 
