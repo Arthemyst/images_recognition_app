@@ -7,9 +7,13 @@ import argparse
 import cv2
 import os
 import warnings
+import logging
+import logging.config
 
 warnings.filterwarnings("ignore", category=FutureWarning)
-
+LOGGER_INI = os.path.abspath('logger.ini')
+logging.config.fileConfig(LOGGER_INI)
+logger = logging.getLogger('image_recognition')
 
 # Example of execution:
 # python multilabel_classification.py -d images_multilabes/black_dress/0000.jpg -m output/multilabel_model_29_10_2023_20_48/saved_model.pb
@@ -29,23 +33,23 @@ ap.add_argument('-d', '--image', required=True, help='Path to image')
 ap.add_argument('-m', '--model', required=True, help='Path to model')
 args = vars(ap.parse_args())
 
-print('[INFO] Loading model...')
+logger.info('Loading model...')
 model = load_model(args['model'])
 image = load(args['image'])
 y_pred = model.predict(image)[0]
 
-print('[INFO] Loading labels...')
+logger.info('Loading labels...')
 with open(r'output/mlb.pickle', 'rb') as file:
     mlb = pickle.loads(file.read())
 
 labels = dict(enumerate(mlb.classes_))
 idxs = np.argsort(y_pred)[::-1]
 
-print('[INFO] Loading image...')
+logger.info('Loading image...')
 image = cv2.imread(args['image'])
 image = imutils.resize(image, width=1000)
 
-print('[INFO] Displaying image...')
+logger.info('Displaying image...')
 for i, idx in enumerate(idxs[:2]):
     cv2.putText(img=image, text=f'Labels: {labels[idx]:6} Probability: {y_pred[idx] * 100:.4f}%',
                 org=(10, (i * 30) + 25), fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.8,

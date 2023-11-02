@@ -11,13 +11,17 @@ from plotly.subplots import make_subplots
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
+import logging
+import logging.config
 from model_preparation.architecture import models
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+LOGGER_INI = os.path.abspath('logger.ini')
+logging.config.fileConfig(LOGGER_INI)
+logger = logging.getLogger('image_recognition')
 
 # example of execution:
 # $ python train_binary.py -e 20
@@ -151,7 +155,7 @@ early_stop = EarlyStopping(
     restore_best_weights=False,
 )
 
-print("[INFO] Model training...")
+logger.info("Model training...")
 history = model.fit_generator(
     generator=train_generator,
     steps_per_epoch=train_generator.samples // BATCH_SIZE,
@@ -161,13 +165,13 @@ history = model.fit_generator(
     callbacks=[checkpoint, early_stop],
 )
 
-print("[INFO] Exporting plot to html file...")
+logger.info("Exporting plot to html file...")
 filename = os.path.join("output", "report_" + dt + ".html")
 model_name = architectures[MODEL_NAME].split('.')[1]
 plot_hist(history, filename, model_name)
 
-print("[INFO] Exporting label to file...")
+logger.info("Exporting label to file...")
 with open(r"output/labels.pickle", "wb") as file:
     file.write(pickle.dumps(train_generator.class_indices))
 
-print("[INFO] END")
+logger.info("END")

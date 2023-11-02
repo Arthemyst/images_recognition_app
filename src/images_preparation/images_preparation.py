@@ -132,12 +132,12 @@ def copy_classes_to_directories(
 
 def prepare_images(
     classes: List[str],
-    DATA_DIR: str,
+    data_dir: str,
     base_dir: str,
     train_ratio: float,
     valid_ratio: float,
 ) -> None:
-    list_of_classes_dir_dicts = create_train_valid_test_directories(DATA_DIR, classes)
+    list_of_classes_dir_dicts = create_train_valid_test_directories(data_dir, classes)
     list_of_cls_names = validation_of_correct_names(classes, base_dir)
     (
         list_of_train_classes,

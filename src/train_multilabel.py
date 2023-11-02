@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import plotly.offline as po
 from plotly.subplots import make_subplots
 from imutils import paths
+import logging.config
 import numpy as np
 import pandas as pd
 import argparse
@@ -16,10 +17,15 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_arra
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from model_preparation.architecture import models
+import logging
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
+LOGGER_INI = os.path.abspath('logger.ini')
+logging.config.fileConfig(LOGGER_INI)
+logger = logging.getLogger('image_recognition')
 
 
 def plot_hist(history, filename, model_name):
@@ -98,7 +104,7 @@ LEARNING_RATE = 0.001
 BATCH_SIZE = 32
 INPUT_SHAPE = (150, 150, 3)
 
-print('[INFO] Data loading...')
+logger.info('Data loading...')
 image_paths = list(paths.list_images(args['images']))
 np.random.shuffle(image_paths)
 
@@ -116,24 +122,24 @@ for image_path in image_paths:
 data = np.array(data, dtype='float') / 255.
 labels = np.array(labels)
 
-print(f'[INFO] {len(image_paths)} images with size: {data.nbytes / (1024 * 1000.0):.2f} MB')
-print(f'[INFO] Shape of data: {data.shape}')
+logger.info(f'{len(image_paths)} images with size: {data.nbytes / (1024 * 1000.0):.2f} MB')
+logger.info(f'Shape of data: {data.shape}')
 
-print(f'[INFO] Binarization of labels... ')
+logger.info(f'Binarization of labels... ')
 mlb = MultiLabelBinarizer()
 labels = mlb.fit_transform(labels)
-print(f'[INFO] Labels: {mlb.classes_}')
+logger.info(f'Labels: {mlb.classes_}')
 
-print(f'[INFO] Export labels to file...')
+logger.info(f'Export labels to file...')
 with open(r'output/mlb.pickle', 'wb') as file:
     file.write(pickle.dumps(mlb))
 
-print('[INFO] Split to train and test datasets...')
+logger.info('Split to train and test datasets...')
 X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=10)
-print(f'[INFO] Shape of train dataset: {X_train.shape}')
-print(f'[INFO] Shape of test dataset: {X_test.shape}')
+logger.info(f'Shape of train dataset: {X_train.shape}')
+logger.info(f'Shape of test dataset: {X_test.shape}')
 
-print('[INFO] Generator building...')
+logger.info('Generator building...')
 train_datagen = ImageDataGenerator(
     rotation_range=30,
     width_shift_range=0.2,
@@ -145,7 +151,7 @@ train_datagen = ImageDataGenerator(
 )
 
 
-print('[INFO] Model building...')
+logger.info('Model building...')
 architecture = models.VGGNetSmall(input_shape=INPUT_SHAPE, num_classes=len(mlb.classes_), final_activation='sigmoid')
 model = architecture.build()
 SUMMARY = model.summary()
@@ -169,7 +175,7 @@ early_stop = EarlyStopping(
     restore_best_weights=False,
 )
 
-print("[INFO] Model training...")
+logger.info("Model training...")
 history = model.fit_generator(
     generator=train_datagen.flow(X_train, y_train, batch_size=BATCH_SIZE),
     steps_per_epoch=len(X_train) // BATCH_SIZE,
@@ -180,9 +186,9 @@ history = model.fit_generator(
 )
 
 filename = os.path.join('output', 'multilabel_report_' + dt + '.html')
-print(f"[INFO] Exporting plot to file {filename}...")
+logger.info(f"Exporting plot to file {filename}...")
 plot_hist(history, filename, MODEL_NAME)
 
-print("[INFO] END")
+logger.info("END")
 
 
