@@ -1,11 +1,15 @@
 import tensorflow as tf
 import numpy as np
 import cv2
-import time
+from tensorflow.python.framework.ops import EagerTensor
+from typing import List, Tuple
+
+EagerTensorTuple = Tuple[EagerTensor, EagerTensor, EagerTensor, EagerTensor]
 
 
-def non_max_suppression(inputs, model_size, max_output_size, max_output_size_per_class, iou_threshold,
-                        confidence_threshold):
+def non_max_suppression(inputs: EagerTensor, model_size: tuple, max_output_size: int, max_output_size_per_class: int,
+                        iou_threshold: float,
+                        confidence_threshold: float) -> EagerTensorTuple:
     bbox, confs, class_probs = tf.split(inputs, [4, 1, -1], axis=-1)
     bbox = bbox / model_size[0]
     scores = confs * class_probs
@@ -18,22 +22,24 @@ def non_max_suppression(inputs, model_size, max_output_size, max_output_size_per
             iou_threshold=iou_threshold,
             score_threshold=confidence_threshold
         )
+
     return boxes, scores, classes, valid_detections
 
 
-def resize_image(inputs, model_size):
+def resize_image(inputs: EagerTensor, model_size: tuple) -> EagerTensor:
     inputs = tf.image.resize(inputs, model_size)
+
     return inputs
 
 
-def load_class_names(file_name):
+def load_class_names(file_name: str) -> List[str]:
     with open(file_name, 'r') as file:
         class_names = file.read().splitlines()
     return class_names
 
 
-def output_boxes(inputs, model_size, max_output_size, max_output_size_per_class,
-                 iou_threshold, confidence_threshold):
+def output_boxes(inputs: np.ndarray, model_size: tuple, max_output_size: int, max_output_size_per_class: int,
+                 iou_threshold: float, confidence_threshold: float) -> tuple:
     center_x, center_y, width, height, confidence, classes = \
         tf.split(inputs, [1, 1, 1, 1, 1, -1], axis=-1)
     top_left_x = center_x - width / 2.0
@@ -47,7 +53,8 @@ def output_boxes(inputs, model_size, max_output_size, max_output_size_per_class,
     return boxes_dicts
 
 
-def draw_outputs(img, boxes, objectness, classes, nums, class_names):
+def draw_outputs(img: np.ndarray, boxes: EagerTensor, objectness: EagerTensor, classes: EagerTensor, nums: EagerTensor,
+                 class_names: List[str]) -> np.ndarray:
     boxes, objectness, classes, nums = boxes[0], objectness[0], classes[0], nums[0]
     boxes = np.array(boxes)
     for i in range(nums):

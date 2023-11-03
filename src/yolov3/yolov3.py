@@ -1,9 +1,11 @@
 import tensorflow as tf
 from tensorflow.keras import Model
 from tensorflow.keras.layers import BatchNormalization, Conv2D, Input, ZeroPadding2D, LeakyReLU, UpSampling2D
+from keras.src.engine.functional import Functional
+from typing import List
 
 
-def parse_cfg(cfg_file: str):
+def parse_cfg(cfg_file: str) -> List[dict]:
     with open(cfg_file, 'r') as file:
         lines = [line.rstrip('\n') for line in file if line != '\n' and line[0] != '#']
     holder = {}
@@ -20,7 +22,7 @@ def parse_cfg(cfg_file: str):
     return blocks
 
 
-def yolo_v3_net(cfg_file, model_size, num_classes):
+def yolo_v3_net(cfg_file: str, model_size: tuple, num_classes: int) -> Functional:
     blocks = parse_cfg(cfg_file)
 
     outputs = {}
@@ -53,7 +55,7 @@ def yolo_v3_net(cfg_file, model_size, num_classes):
 
             if "batch_normalize" in block:
                 inputs = BatchNormalization(name="bnorm_" + str(i))(inputs)
-            # if activation == "leaky"
+                # if activation == "leaky"
                 inputs = LeakyReLU(alpha=0.1, name="leaky_" + str(i))(inputs)
 
         elif block["type"] == "upsample":
@@ -128,16 +130,3 @@ def yolo_v3_net(cfg_file, model_size, num_classes):
     model = Model(input_image, out_pred)
     model.summary()
     return model
-
-
-
-
-
-
-
-
-
-
-
-
-

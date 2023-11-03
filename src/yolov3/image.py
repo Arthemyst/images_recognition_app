@@ -16,10 +16,10 @@ iou_threshold = 0.5
 confidence_threshold = 0.5
 cfg_file = 'cfg/yolov3.cfg'
 weight_file = 'weights/yolov3_weights.tf'
-img_path = "data/images/test2.jpg"
+img_path = "data/images/plane.jpeg"
 
 
-def main():
+def main() -> None:
     model = yolo_v3_net(cfg_file, model_size, num_classes)
     model.load_weights(weight_file)
     class_names = load_class_names(class_name)
@@ -38,10 +38,9 @@ def main():
     image = np.squeeze(image)
     img = draw_outputs(image, boxes, scores, classes, nums, class_names)
     win_name = 'Image detection'
-    cv2.imshow(win_name, img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    # If you want to save the result, uncommnent the line below:
+    # cv2.imshow(win_name, img)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     cv2.imwrite('test_output.jpg', img)
 
 

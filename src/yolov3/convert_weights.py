@@ -1,9 +1,14 @@
 import numpy as np
 from yolov3 import yolo_v3_net
 from yolov3 import parse_cfg
+from keras.src.engine.functional import Functional
 
 
-def load_weights(model, cfg_file, weight_file):
+def load_weights(model: Functional, cfg_file: str, weight_file: str) -> None:
+    print(f"{type(model)=}")
+    print(f"{type(cfg_file)=}")
+    print(f"{type(weight_file)=}")
+
     # Open the weights file
     fp = open(weight_file, "rb")
     # Skip 5 header values
@@ -42,7 +47,7 @@ def load_weights(model, cfg_file, weight_file):
     fp.close()
 
 
-def main():
+def main() -> None:
     weight_file = "weights/yolov3.weights"
     cfg_file = "cfg/yolov3.cfg"
     model_size = (416, 416, 3)
